@@ -186,6 +186,7 @@ export function AppProvider({ children }) {
         if (authData.profile.role === 'student') {
           // Temporarily sync activeStudentId for backwards compatibility until Phase 3
           // For now, if role is student, set to their auth uid or mock id
+          dispatch({ type: 'SET_ACTIVE_STUDENT', payload: 'student1' });
         }
       } else {
         dispatch({ type: 'LOGOUT' });

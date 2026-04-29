@@ -9,7 +9,7 @@ import GeoRadarAnimation from '../../components/GeoRadarAnimation';
 export default function StudentGeoMark() {
   const { state } = useApp();
   const student = state.students.find(s => s.id === state.activeStudentId);
-  const myClasses = state.classes.filter(cls => cls.studentIds.includes(state.activeStudentId));
+  const myClasses = state.classes.filter(cls => (cls.studentIds || []).includes(state.activeStudentId));
 
   // Per-class geo check state
   const [geoStates, setGeoStates] = useState({});

@@ -79,7 +79,7 @@ export default function StudentDashboard() {
       {/* Per-class breakdown */}
       <h2 className="headline-sm mt-8 fade-up delay-2">Class Breakdown</h2>
       <div className="flex-col gap-4 mt-4 fade-up delay-3">
-        {state.classes.filter(cls => cls.studentIds.includes(state.activeStudentId)).map(cls => {
+        {state.classes.filter(cls => (cls.studentIds || []).includes(state.activeStudentId)).map(cls => {
           const s = summary[cls.id] || { total: 0, present: 0, late: 0, absent: 0, percentage: 100 };
           return (
             <div key={cls.id} className="card flex items-center gap-6" style={{ padding: '20px 24px' }}>
