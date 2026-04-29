@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { logoutUser } from '../services/authService';
 
 const TEACHER_LINKS = [
   { to: '/teacher',              label: 'Dashboard',      icon: '◈', end: true },
@@ -27,9 +28,14 @@ export default function Sidebar({ role }) {
 
   const initials = user?.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
-  function handleLogout() {
-    dispatch({ type: 'LOGOUT' });
-    navigate('/', { replace: true });
+  async function handleLogout() {
+    try {
+      await logoutUser();
+      // AppContext listener will handle the dispatch
+      navigate('/', { replace: true });
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
   }
 
   return (

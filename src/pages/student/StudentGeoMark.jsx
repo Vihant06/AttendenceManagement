@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useApp, haversineDistance, isGeoSessionActive, getTodayAttendanceStatus } from '../../context/AppContext';
+import { markAttendance } from '../../services/firestoreService';
 import GeoRadarAnimation from '../../components/GeoRadarAnimation';
 
 // Status for each class card
 // 'no-session' | 'idle' | 'scanning' | 'inRange' | 'outOfRange' | 'marked'
 
 export default function StudentGeoMark() {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
   const student = state.students.find(s => s.id === state.activeStudentId);
   const myClasses = state.classes.filter(cls => cls.studentIds.includes(state.activeStudentId));
 
@@ -55,9 +56,15 @@ export default function StudentGeoMark() {
     );
   }
 
-  function markPresent(classId) {
-    dispatch({ type: 'GEO_MARK_ATTENDANCE', payload: { classId, studentId: state.activeStudentId } });
-    setClassGeo(classId, { status: 'marked' });
+  async function markPresent(classId) {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await markAttendance(state.activeStudentId, classId, today, 'present');
+      setClassGeo(classId, { status: 'marked' });
+    } catch (err) {
+      console.error("Failed to mark attendance", err);
+      setClassGeo(classId, { status: 'error', message: "Failed to save attendance." });
+    }
   }
 
   return (

@@ -13,15 +13,17 @@ export default function ProtectedRoute({ children, requiredRole }) {
   const { isLoggedIn, role } = state.auth;
 
   useEffect(() => {
+    if (state.authLoading) return; // Wait for Firebase to initialize
     if (!isLoggedIn) {
       const loginPath = requiredRole ? `/login/${requiredRole}` : '/';
       navigate(loginPath, { state: { from: location }, replace: true });
     } else if (requiredRole && role !== requiredRole) {
       navigate(`/${role}`, { replace: true });
     }
-  }, [isLoggedIn, role, requiredRole]);
+  }, [isLoggedIn, role, requiredRole, state.authLoading]);
 
-  // While redirecting, render nothing
+  // While redirecting or loading, render nothing
+  if (state.authLoading) return null;
   if (!isLoggedIn) return null;
   if (requiredRole && role !== requiredRole) return null;
 

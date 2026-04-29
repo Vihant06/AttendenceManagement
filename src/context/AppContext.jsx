@@ -1,32 +1,20 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
+import { subscribeToAuthChanges } from '../services/authService';
+import { subscribeToClasses, subscribeToAttendance, subscribeToGeoSessions, subscribeToUsers } from '../services/firestoreService';
 
-// ─── Mock Credentials (frontend-only; shape mirrors POST /api/auth/login) ────
-export const MOCK_CREDENTIALS = {
-  teachers: [
-    { id: 't-001', email: 'priya.sharma@eduatelier.in', password: 'teacher123' },
-  ],
-  students: [
-    { id: 's-001', email: 'arjun@student.edu',   password: 'student123' },
-    { id: 's-002', email: 'zara@student.edu',    password: 'student123' },
-    { id: 's-003', email: 'rohan@student.edu',   password: 'student123' },
-    { id: 's-004', email: 'ananya@student.edu',  password: 'student123' },
-    { id: 's-005', email: 'dev@student.edu',     password: 'student123' },
-    { id: 's-006', email: 'isha@student.edu',    password: 'student123' },
-    { id: 's-007', email: 'karan@student.edu',   password: 'student123' },
-    { id: 's-008', email: 'meera@student.edu',   password: 'student123' },
-  ],
-};
-
-// ─── Initial Mock Data ───────────────────────────────────────────────────────
+// ─── Initial Data (mock data for classes/attendance kept for Phase 3) ────────
 
 const INITIAL_STATE = {
-  // ── Auth ── (mirrors JWT payload shape for easy backend swap)
+  // ── Auth ──
   auth: {
     isLoggedIn: false,
     role: null,       // 'teacher' | 'student'
-    userId: null,     // teacher.id or student.id
+    userId: null,     // Firebase uid
   },
+  authLoading: true, // Firebase auth initialization
 
+  // Mock users for UI until full user collection is integrated
+  users: [],
   teacher: {
     id: 't-001',
     name: 'Dr. Priya Sharma',
@@ -44,58 +32,9 @@ const INITIAL_STATE = {
     { id: 's-007', name: 'Karan Singh',   email: 'karan@student.edu',   rollNo: 'CS2021-07', avatar: null },
     { id: 's-008', name: 'Meera Thomas',  email: 'meera@student.edu',   rollNo: 'CS2021-08', avatar: null },
   ],
-  classes: [
-    {
-      id: 'cls-001',
-      name: 'Data Structures & Algorithms',
-      code: 'CS301',
-      schedule: 'Mon / Wed / Fri — 9:00 AM',
-      room: 'Lab 4A',
-      studentIds: ['s-001', 's-002', 's-003', 's-004', 's-005', 's-006', 's-007', 's-008'],
-      semester: 'Spring 2025',
-    },
-    {
-      id: 'cls-002',
-      name: 'Database Management Systems',
-      code: 'CS302',
-      schedule: 'Tue / Thu — 11:00 AM',
-      room: 'Room 2B',
-      studentIds: ['s-001', 's-002', 's-004', 's-006', 's-008'],
-      semester: 'Spring 2025',
-    },
-    {
-      id: 'cls-003',
-      name: 'Operating Systems',
-      code: 'CS303',
-      schedule: 'Mon / Wed — 2:00 PM',
-      room: 'Room 3C',
-      studentIds: ['s-003', 's-005', 's-007'],
-      semester: 'Spring 2025',
-    },
-  ],
-  attendanceRecords: {
-    'cls-001': {
-      '2025-04-07': { 's-001': 'present', 's-002': 'present', 's-003': 'absent',  's-004': 'present', 's-005': 'late',    's-006': 'present', 's-007': 'present', 's-008': 'absent'  },
-      '2025-04-09': { 's-001': 'present', 's-002': 'late',    's-003': 'present', 's-004': 'absent',  's-005': 'present', 's-006': 'present', 's-007': 'absent',  's-008': 'present' },
-      '2025-04-11': { 's-001': 'present', 's-002': 'present', 's-003': 'present', 's-004': 'present', 's-005': 'absent',  's-006': 'late',    's-007': 'present', 's-008': 'present' },
-      '2025-04-14': { 's-001': 'absent',  's-002': 'present', 's-003': 'present', 's-004': 'present', 's-005': 'present', 's-006': 'present', 's-007': 'late',    's-008': 'present' },
-      '2025-04-16': { 's-001': 'present', 's-002': 'present', 's-003': 'late',    's-004': 'present', 's-005': 'present', 's-006': 'absent',  's-007': 'present', 's-008': 'present' },
-    },
-    'cls-002': {
-      '2025-04-08': { 's-001': 'present', 's-002': 'present', 's-004': 'present', 's-006': 'absent',  's-008': 'late'    },
-      '2025-04-10': { 's-001': 'late',    's-002': 'present', 's-004': 'present', 's-006': 'present', 's-008': 'present' },
-      '2025-04-15': { 's-001': 'present', 's-002': 'absent',  's-004': 'late',    's-006': 'present', 's-008': 'present' },
-    },
-    'cls-003': {
-      '2025-04-07': { 's-003': 'present', 's-005': 'present', 's-007': 'absent'  },
-      '2025-04-09': { 's-003': 'late',    's-005': 'present', 's-007': 'present' },
-      '2025-04-14': { 's-003': 'present', 's-005': 'absent',  's-007': 'present' },
-    },
-  },
+  classes: [],
+  attendanceRecords: {},
   activeStudentId: 's-001',
-
-  // ── Geo-fencing sessions ── (mirrors GET /api/classes/:id/geo-session)
-  // Shape: { [classId]: GeoSession | null }
   geoSessions: {},
 };
 
@@ -107,10 +46,13 @@ function reducer(state, action) {
     // ── Auth ──────────────────────────────────────────────────────────────────
     case 'LOGIN': {
       const { role, userId } = action.payload;
-      return { ...state, auth: { isLoggedIn: true, role, userId } };
+      return { ...state, auth: { isLoggedIn: true, role, userId }, authLoading: false };
     }
     case 'LOGOUT': {
-      return { ...state, auth: { isLoggedIn: false, role: null, userId: null } };
+      return { ...state, auth: { isLoggedIn: false, role: null, userId: null }, authLoading: false };
+    }
+    case 'AUTH_LOADING': {
+      return { ...state, authLoading: true };
     }
 
     // ── Geo Sessions ──────────────────────────────────────────────────────────
@@ -125,7 +67,7 @@ function reducer(state, action) {
             lat, lng, radiusMetres,
             openedAt: new Date().toISOString(),
             expiresAt,
-            checkedIn: [],  // studentIds who've geo-marked
+            checkedIn: [],
           },
         },
       };
@@ -138,7 +80,6 @@ function reducer(state, action) {
       };
     }
     case 'GEO_MARK_ATTENDANCE': {
-      // Student confirmed within geo-fence → mark as present
       const { classId, studentId } = action.payload;
       const today = new Date().toISOString().split('T')[0];
       const classRecords = state.attendanceRecords[classId] || {};
@@ -190,6 +131,25 @@ function reducer(state, action) {
     case 'SET_ACTIVE_STUDENT': {
       return { ...state, activeStudentId: action.payload };
     }
+    // ── Database Sync Actions ────────────────────────────────────────────────
+    case 'SET_CLASSES': {
+      return { ...state, classes: action.payload };
+    }
+    case 'SET_ATTENDANCE_RECORDS': {
+      return { ...state, attendanceRecords: action.payload };
+    }
+    case 'SET_GEO_SESSIONS': {
+      // Map firebase format to expected UI format
+      const newGeo = { ...action.payload };
+      for (const key of Object.keys(newGeo)) {
+        newGeo[key].active = newGeo[key].isActive;
+        newGeo[key].radiusMetres = newGeo[key].radius;
+      }
+      return { ...state, geoSessions: newGeo };
+    }
+    case 'SET_STUDENTS': {
+      return { ...state, students: action.payload };
+    }
     case 'HYDRATE': {
       return action.payload;
     }
@@ -201,7 +161,7 @@ function reducer(state, action) {
 // ─── Context + Provider ───────────────────────────────────────────────────────
 
 const AppContext = createContext(null);
-const STORAGE_KEY = 'attendance_app_state_v2';
+const STORAGE_KEY = 'attendance_app_state_v3';
 
 export function AppProvider({ children }) {
   const saved = (() => {
@@ -218,6 +178,65 @@ export function AppProvider({ children }) {
     catch { /* storage full */ }
   }, [state]);
 
+  // Handle Firebase Auth State changes
+  useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges((authData) => {
+      if (authData) {
+        dispatch({ type: 'LOGIN', payload: { role: authData.profile.role, userId: authData.user.uid } });
+        if (authData.profile.role === 'student') {
+          // Temporarily sync activeStudentId for backwards compatibility until Phase 3
+          // For now, if role is student, set to their auth uid or mock id
+        }
+      } else {
+        dispatch({ type: 'LOGOUT' });
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Handle Firestore Data Sync
+  useEffect(() => {
+    // Only subscribe if we are logged in
+    if (!state.auth.isLoggedIn) return;
+
+    const unsubClasses = subscribeToClasses((classes) => {
+      dispatch({ type: 'SET_CLASSES', payload: classes });
+    });
+
+    const unsubAttendance = subscribeToAttendance((attendanceList) => {
+      // transform flat list to nested dictionary
+      const records = {};
+      attendanceList.forEach(att => {
+        if (!records[att.classId]) records[att.classId] = {};
+        if (!records[att.classId][att.date]) records[att.classId][att.date] = {};
+        records[att.classId][att.date][att.studentId] = att.status;
+      });
+      dispatch({ type: 'SET_ATTENDANCE_RECORDS', payload: records });
+    });
+
+    const unsubGeo = subscribeToGeoSessions((sessions) => {
+      dispatch({ type: 'SET_GEO_SESSIONS', payload: sessions });
+    });
+
+    const unsubUsers = subscribeToUsers((usersList) => {
+      // Map to keep the old UI working seamlessly
+      const students = usersList.filter(u => u.role === 'student').map(s => ({
+        id: s.id,
+        name: s.name,
+        email: s.email
+      }));
+      dispatch({ type: 'SET_STUDENTS', payload: students });
+    });
+
+    return () => {
+      unsubClasses();
+      unsubAttendance();
+      unsubGeo();
+      unsubUsers();
+    };
+  }, [state.auth.isLoggedIn]);
+
   return (
     <AppContext.Provider value={{ state, dispatch }}>
       {children}
@@ -231,18 +250,8 @@ export function useApp() {
   return ctx;
 }
 
-// ─── Auth helper ─────────────────────────────────────────────────────────────
-
-export function validateLogin(role, email, password) {
-  const list = role === 'teacher'
-    ? MOCK_CREDENTIALS.teachers
-    : MOCK_CREDENTIALS.students;
-  return list.find(u => u.email === email && u.password === password) || null;
-}
-
 // ─── Geo helpers ─────────────────────────────────────────────────────────────
 
-/** Haversine formula → distance in metres between two coords */
 export function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const toRad = d => (d * Math.PI) / 180;
@@ -256,7 +265,11 @@ export function haversineDistance(lat1, lng1, lat2, lng2) {
 
 export function isGeoSessionActive(session) {
   if (!session?.active) return false;
-  return new Date() < new Date(session.expiresAt);
+  // If we have an expiresAt, check it. Otherwise, assume active if active is true.
+  if (session.expiresAt) {
+    return new Date() < new Date(session.expiresAt);
+  }
+  return true;
 }
 
 // ─── Existing derived data helpers ───────────────────────────────────────────

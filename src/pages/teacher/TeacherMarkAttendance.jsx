@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { markBulkAttendance } from '../../services/firestoreService';
 
 const STATUS_OPTIONS = ['present', 'absent', 'late'];
 
@@ -29,11 +30,12 @@ function StatusToggle({ value, onChange }) {
 }
 
 export default function TeacherMarkAttendance() {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
   const [selectedClass, setSelectedClass] = useState(state.classes[0]?.id || '');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [draft, setDraft] = useState({});
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const cls = state.classes.find(c => c.id === selectedClass);
   const existingRecords = state.attendanceRecords[selectedClass]?.[date] || {};
@@ -53,11 +55,19 @@ export default function TeacherMarkAttendance() {
     setSaved(false);
   }
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true);
     const records = {};
     (cls?.studentIds || []).forEach(id => { records[id] = getStatus(id); });
-    dispatch({ type: 'MARK_BULK_ATTENDANCE', payload: { classId: selectedClass, date, records } });
-    setSaved(true);
+    
+    try {
+      await markBulkAttendance(selectedClass, date, records);
+      setSaved(true);
+    } catch (err) {
+      console.error("Failed to save attendance", err);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (

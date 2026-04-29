@@ -1,27 +1,29 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { createClass } from '../../services/firestoreService';
 
 export default function TeacherClasses() {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', code: '', schedule: '', room: '', semester: 'Spring 2025' });
 
-  function handleAdd(e) {
+  async function handleAdd(e) {
     e.preventDefault();
-    dispatch({
-      type: 'ADD_CLASS',
-      payload: {
-        id: `cls-${Date.now()}`,
+    try {
+      await createClass({
         name: form.name,
         code: form.code,
         schedule: form.schedule,
         room: form.room,
         semester: form.semester,
         studentIds: [],
-      },
-    });
-    setForm({ name: '', code: '', schedule: '', room: '', semester: 'Spring 2025' });
-    setShowForm(false);
+        teacherId: state.auth.userId // Ensure we link it to the teacher!
+      });
+      setForm({ name: '', code: '', schedule: '', room: '', semester: 'Spring 2025' });
+      setShowForm(false);
+    } catch (err) {
+      console.error("Failed to create class", err);
+    }
   }
 
   return (

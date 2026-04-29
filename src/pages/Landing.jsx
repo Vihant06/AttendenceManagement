@@ -62,7 +62,7 @@ export default function Landing() {
       </div>
 
       <div className="body-md fade-up delay-3" style={{ marginTop: '40px', fontSize: '0.75rem', textAlign: 'center' }}>
-        Frontend demo — no backend required · Data persists in your browser · 📍 Geo-fencing uses real GPS
+        Firebase backend connected · Real-time synchronization · 📍 Geo-fencing uses real GPS
       </div>
     </div>
   );

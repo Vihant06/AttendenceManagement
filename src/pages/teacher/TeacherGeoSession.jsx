@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useApp, isGeoSessionActive } from '../../context/AppContext';
+import { startGeoSession, stopGeoSession } from '../../services/firestoreService';
 import GeoRadarAnimation from '../../components/GeoRadarAnimation';
 
 const RADIUS_OPTIONS = [50, 100, 150, 200, 500];
@@ -67,25 +68,24 @@ export default function TeacherGeoSession() {
     );
   }
 
-  function openSession() {
+  async function openSession() {
     if (!teacherCoords) return;
     const expiresAt = new Date(Date.now() + duration * 60000).toISOString();
-    dispatch({
-      type: 'OPEN_GEO_SESSION',
-      payload: {
-        classId: selectedClass,
-        lat: teacherCoords.lat,
-        lng: teacherCoords.lng,
-        radiusMetres: radius,
-        expiresAt,
-      },
-    });
+    try {
+      await startGeoSession(selectedClass, state.auth.userId, teacherCoords.lat, teacherCoords.lng, radius, expiresAt);
+    } catch (err) {
+      console.error("Failed to start geo session", err);
+    }
   }
 
-  function closeSession() {
-    dispatch({ type: 'CLOSE_GEO_SESSION', payload: { classId: selectedClass } });
-    setLocStatus('idle');
-    setTeacherCoords(null);
+  async function closeSession() {
+    try {
+      await stopGeoSession(selectedClass);
+      setLocStatus('idle');
+      setTeacherCoords(null);
+    } catch (err) {
+      console.error("Failed to stop geo session", err);
+    }
   }
 
   const checkedInStudents = sessionActive
