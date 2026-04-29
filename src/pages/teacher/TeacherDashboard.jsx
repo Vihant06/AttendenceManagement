@@ -10,10 +10,11 @@ export default function TeacherDashboard() {
   for (const cls of state.classes) {
     const records = state.attendanceRecords[cls.id] || {};
     const dates = Object.keys(records);
+    const sIds = cls.studentIds || [];
     totalSessions += dates.length;
-    totalStudents += cls.studentIds.length;
+    totalStudents += sIds.length;
     for (const date of dates) {
-      for (const sid of cls.studentIds) {
+      for (const sid of sIds) {
         const s = records[date]?.[sid];
         if (s === 'present' || s === 'late') totalPresent++;
       }
@@ -65,14 +66,15 @@ export default function TeacherDashboard() {
       <h2 className="headline-sm mt-8 fade-up delay-2">Classes at a Glance</h2>
       <div className="flex-col gap-4 mt-4 fade-up delay-3">
         {state.classes.map(cls => {
+          const sIds = cls.studentIds || [];
           const summary = getClassAttendanceSummary(state, cls.id);
-          const totalStuds = cls.studentIds.length;
+          const totalStuds = sIds.length;
           const avgPct = totalStuds
             ? Math.round(Object.values(summary).reduce((a, v) => a + v.percentage, 0) / totalStuds)
             : 100;
           // Low attendance students (< 75%)
           const lowStudents = state.students
-            .filter(s => cls.studentIds.includes(s.id) && (summary[s.id]?.percentage ?? 100) < 75);
+            .filter(s => sIds.includes(s.id) && (summary[s.id]?.percentage ?? 100) < 75);
 
           return (
             <div key={cls.id} className="card" style={{ padding: '20px 24px' }}>

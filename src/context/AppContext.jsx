@@ -278,7 +278,8 @@ export function getStudentAttendanceSummary(state, studentId) {
   const summary = {};
   for (const cls of state.classes) {
     const records = state.attendanceRecords[cls.id] || {};
-    if (!cls.studentIds.includes(studentId)) continue;
+    const sIds = cls.studentIds || [];
+    if (!sIds.includes(studentId)) continue;
     let total = 0, present = 0, late = 0, absent = 0;
     for (const date of Object.keys(records)) {
       const status = records[date][studentId];
@@ -298,7 +299,7 @@ export function getClassAttendanceSummary(state, classId) {
   const cls = state.classes.find(c => c.id === classId);
   if (!cls) return {};
   const summary = {};
-  for (const studentId of cls.studentIds) {
+  for (const studentId of (cls.studentIds || [])) {
     let total = 0, present = 0, late = 0, absent = 0;
     for (const date of Object.keys(records)) {
       const status = records[date][studentId];
