@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { loginUser, signupUser } from '../../services/authService';
@@ -37,10 +37,11 @@ export default function LoginPage() {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
 
-  // If already logged in as this role, jump to dashboard
-  if (state.auth.isLoggedIn && state.auth.role === role) {
-    navigate(`/${role}`, { replace: true });
-  }
+  useEffect(() => {
+    if (state.auth.isLoggedIn && state.auth.role === role) {
+      navigate(`/${role}`, { replace: true });
+    }
+  }, [state.auth.isLoggedIn, state.auth.role, role, navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();

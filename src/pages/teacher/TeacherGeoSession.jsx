@@ -40,6 +40,12 @@ export default function TeacherGeoSession() {
   const [teacherCoords, setTeacherCoords] = useState(null);
   const [geoError, setGeoError]           = useState('');
 
+  useEffect(() => {
+    if (!selectedClass && state.classes.length > 0) {
+      setSelectedClass(state.classes[0].id);
+    }
+  }, [state.classes, selectedClass]);
+
   const cls = state.classes.find(c => c.id === selectedClass);
   const session = state.geoSessions?.[selectedClass];
   const sessionActive = isGeoSessionActive(session);

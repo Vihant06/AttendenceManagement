@@ -33,7 +33,7 @@ export default function Landing() {
           fontSize: '2rem', margin: '0 auto 20px',
           boxShadow: 'var(--shadow-float)',
         }}>🍃</div>
-        <h1 className="display-lg">Atelier Attendance</h1>
+        <h1 className="display-lg">Geo Attend</h1>
         <p className="body-md" style={{ marginTop: '10px', fontSize: '1rem', maxWidth: '420px', margin: '10px auto 0' }}>
           A premium attendance management system with geo-fencing, for modern educational institutions.
         </p>

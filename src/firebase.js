@@ -3,12 +3,12 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC9obiIEfDoh5vlYhXzwQFoMkvGAltoLMo",
-  authDomain: "attendance-vihant-2026.firebaseapp.com",
-  projectId: "attendance-vihant-2026",
-  storageBucket: "attendance-vihant-2026.firebasestorage.app",
-  messagingSenderId: "317103311779",
-  appId: "1:317103311779:web:b283d1252e5817d3396816"
+  apiKey: "AIzaSyBZI_kP5q0A2NIgLLAvPF_8CZ-UBh3qbZI",
+  authDomain: "geo-attend-tracker.firebaseapp.com",
+  projectId: "geo-attend-tracker",
+  storageBucket: "geo-attend-tracker.firebasestorage.app",
+  messagingSenderId: "629937865421",
+  appId: "1:629937865421:web:0257a0cb16d2f29b265f84"
 };
 
 // Initialize Firebase

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp, getClassAttendanceSummary } from '../../context/AppContext';
 
 function BarChart({ data }) {
@@ -26,6 +26,12 @@ function BarChart({ data }) {
 export default function TeacherReports() {
   const { state } = useApp();
   const [selectedClass, setSelectedClass] = useState(state.classes[0]?.id || '');
+
+  useEffect(() => {
+    if (!selectedClass && state.classes.length > 0) {
+      setSelectedClass(state.classes[0].id);
+    }
+  }, [state.classes, selectedClass]);
 
   const cls = state.classes.find(c => c.id === selectedClass);
   const summary = getClassAttendanceSummary(state, selectedClass);

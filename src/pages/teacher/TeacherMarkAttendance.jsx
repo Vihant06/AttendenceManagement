@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { markBulkAttendance } from '../../services/firestoreService';
 
@@ -10,18 +10,15 @@ function StatusToggle({ value, onChange }) {
       {STATUS_OPTIONS.map(s => (
         <button
           key={s}
-          onClick={() => onChange(s)}
           className={`badge badge-${s}`}
           style={{
-            opacity: value === s ? 1 : 0.35,
-            cursor: 'pointer',
-            border: value === s ? '2px solid var(--outline-variant)' : '2px solid transparent',
-            transition: 'opacity 0.2s, border 0.2s',
-            fontSize: '0.75rem',
-            fontFamily: 'var(--font-body)',
+            opacity: value === s ? 1 : 0.4,
+            border: value === s ? '2px solid var(--primary)' : '2px solid transparent',
+            fontWeight: value === s ? 700 : 500,
+            transform: value === s ? 'scale(1.05)' : 'scale(1)',
           }}
+          onClick={() => onChange(s)}
         >
-          <span className={`orb orb-${s}`} />
           {s.charAt(0).toUpperCase() + s.slice(1)}
         </button>
       ))}
@@ -36,6 +33,12 @@ export default function TeacherMarkAttendance() {
   const [draft, setDraft] = useState({});
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!selectedClass && state.classes.length > 0) {
+      setSelectedClass(state.classes[0].id);
+    }
+  }, [state.classes, selectedClass]);
 
   const cls = state.classes.find(c => c.id === selectedClass);
   const existingRecords = state.attendanceRecords[selectedClass]?.[date] || {};

@@ -44,8 +44,7 @@ export default function Sidebar({ role }) {
       <div className="nav-logo">
         <div className="nav-logo-icon">🍃</div>
         <div>
-          <div className="headline-sm" style={{ fontSize: '1rem', lineHeight: 1.2 }}>Atelier</div>
-          <div className="label-md" style={{ textTransform: 'none', letterSpacing: 0 }}>Attendance</div>
+          <div className="headline-sm" style={{ fontSize: '1rem', lineHeight: 1.2 }}>Geo Attend</div>
         </div>
       </div>
 

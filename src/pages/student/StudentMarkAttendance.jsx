@@ -4,7 +4,7 @@ import { useApp, getTodayAttendanceStatus } from '../../context/AppContext';
 export default function StudentMarkAttendance() {
   const { state, dispatch } = useApp();
   const student = state.students.find(s => s.id === state.activeStudentId);
-  const myClasses = state.classes.filter(cls => cls.studentIds.includes(state.activeStudentId));
+  const myClasses = state.classes.filter(cls => (cls.studentIds || []).includes(state.activeStudentId));
 
   const today = new Date().toISOString().split('T')[0];
   const [done, setDone] = useState({});

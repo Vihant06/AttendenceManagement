@@ -10,7 +10,7 @@ export default function StudentAttendance() {
   const student = state.students.find(s => s.id === state.activeStudentId);
   const summary = getStudentAttendanceSummary(state, state.activeStudentId);
 
-  const myClasses = state.classes.filter(cls => cls.studentIds.includes(state.activeStudentId));
+  const myClasses = state.classes.filter(cls => (cls.studentIds || []).includes(state.activeStudentId));
 
   return (
     <div className="fade-up">
