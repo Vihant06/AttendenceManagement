@@ -144,6 +144,8 @@ function reducer(state, action) {
       for (const key of Object.keys(newGeo)) {
         newGeo[key].active = newGeo[key].isActive;
         newGeo[key].radiusMetres = newGeo[key].radius;
+        newGeo[key].lat = newGeo[key].latitude;
+        newGeo[key].lng = newGeo[key].longitude;
       }
       return { ...state, geoSessions: newGeo };
     }
